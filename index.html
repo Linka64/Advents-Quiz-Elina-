@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <title>Advent-Quiz — Elina</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        :root{
+            /* Anna: dark base with red and green accents */
+            --bg-gradient: linear-gradient(135deg,#04102a 0%,#42b8e4 100%); /* deep dark blue -> near-black */
+            --card-bg: rgba(255,255,255,0.04);
+            --card-border: rgba(255,255,255,0.06);
+            --accent: #e63946; /* deep red */
+            --accent-2: #2f9e44; /* deep green */
+            --text: #ffffff;
+            --muted: rgba(255,255,255,0.75);
+            --glass: rgba(255,255,255,0.02);
+        }
+        html,body{height:100%}
+        body{margin:0;min-height:100%;font-family:system-ui,Segoe UI,Roboto,Arial;color:var(--text);background:var(--bg-gradient);background-attachment:fixed;padding:20px;display:flex;align-items:center;justify-content:center;transition:background 800ms ease}
+        main{width:100%;max-width:980px;margin:0 auto}
+        header{display:flex;gap:10px;flex-wrap:wrap;margin:0 auto 18px;align-items:center;width:100%;max-width:980px}
+        .brand{font-weight:800;margin-right:auto;letter-spacing:0.6px}
+        .card{background:var(--card-bg);backdrop-filter:blur(6px);border:1px solid var(--card-border);padding:18px;border-radius:14px;color:var(--text);box-shadow:0 8px 30px rgba(2,6,23,0.4);transition:transform .28s cubic-bezier(.2,.9,.2,1),box-shadow .28s;max-width:720px;margin:12px auto}
+        .card.pop{transform:translateY(-8px);box-shadow:0 30px 60px rgba(2,6,23,0.6)}
+        .hide{display:none !important}
+        .choices label{display:block;margin:8px 0;padding:10px;border:1px solid rgba(255,255,255,0.04);border-radius:10px;cursor:pointer;transition:transform .15s ease,background .18s}
+        .choices label:hover{transform:translateX(6px);background:linear-gradient(90deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))}
+        .choices input{margin-right:8px}
+        button{padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(2,6,23,0.5);transition:transform .14s,filter .12s}
+        button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);box-shadow:none}
+        button:active{transform:translateY(2px)}
+
+        .bg-anim{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--bg-gradient);opacity:0.14;filter:blur(40px);animation:moveBG 12s linear infinite}
+        @keyframes moveBG{0%{transform:translateX(0) rotate(0)}50%{transform:translateX(-10%) rotate(2deg)}100%{transform:translateX(0) rotate(0)}}
+        .fade-in{animation:fadeIn .5s ease both}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+        .confetti-piece{position:fixed;z-index:9999;width:10px;height:14px;opacity:0.95;will-change:transform;pointer-events:none}
+    #reload-warning{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#ff2a00,#ff6b2a);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:99999;text-align:center}
+    #reload-warning.show{display:flex}
+    #reload-warning h1{font-size:3em;text-shadow:2px 2px 8px rgba(0,0,0,0.6);font-weight:900;color:#fff}
+
+        /* Center greeting content for mobile/desktop */
+        #greeting{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+        #greeting #friendName{font-size:22px;margin:0 0 8px}
+        #greeting #greetText{margin:0;line-height:1.35;color:var(--muted);max-width:84%}
+
+        /* Start button attention — smoother scale (no blink) */
+        #startBtn{background:linear-gradient(90deg,#ff3b30,#ff6b6b);animation:startPulse 1.6s ease-in-out infinite;transform-origin:center;box-shadow:0 12px 30px rgba(255,59,48,0.18)}
+        @keyframes startPulse{0%{transform:scale(0.94)}50%{transform:scale(1.12)}100%{transform:scale(0.96)}}
+
+        /* Quiz layout — vertical flex */
+        #quiz{display:flex;flex-direction:column;gap:16px}
+        #qNum{margin:0 0 4px;font-size:14px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+        #qText{margin:0 0 12px;font-size:18px;font-weight:600;line-height:1.4}
+        .choices{display:flex;flex-direction:column;gap:8px;margin:8px 0}
+
+        /* Result animations */
+        .anim-sad{animation:sadDrop 1200ms ease both;filter:grayscale(.6);}
+        @keyframes sadDrop{0%{transform:translateY(0) rotate(0)}40%{transform:translateY(-6px) rotate(-2deg)}100%{transform:translateY(8px) rotate(2deg);opacity:.95}}
+
+        .anim-cool{animation:coolSpin 1400ms cubic-bezier(.2,.9,.2,1) both;box-shadow:0 20px 60px rgba(124,58,237,0.14);}
+        @keyframes coolSpin{0%{transform:scale(.96) rotateX(0deg) rotate(0deg);filter:blur(0)}50%{transform:scale(1.03) rotateX(12deg) rotate(6deg);filter:drop-shadow(0 10px 30px rgba(124,58,237,0.18))}100%{transform:scale(1) rotateX(0deg) rotate(0deg)}}
+
+        .anim-mega{animation:megaPulse 900ms cubic-bezier(.2,.9,.2,1) both;}
+        @keyframes megaPulse{0%{transform:scale(.85) rotate(-2deg);filter:brightness(1)}40%{transform:scale(1.18) rotate(2deg);filter:brightness(1.2)}100%{transform:scale(1) rotate(0deg)}}
+
+        @media (max-width:720px){body{padding:14px}.card{border-radius:10px;padding:12px}header{flex-direction:column;align-items:stretch}}
+    </style>
+    <div class="bg-anim" aria-hidden="true"></div>
+</head>
+<body>
+        <div id="reload-warning"><h1>Eyyy! nicht Seite neu laden!<br/>Hab ich doch gesagt!</h1></div>
+    <header><div class="brand">Anna</div></header>
+    <main>
+        <div id="greeting" class="card hide"><h2 id="friendName">Hallo!</h2><p id="greetText"></p><button id="startBtn">Quiz starten</button></div>
+        <div id="quiz" class="card hide">
+            <h3 id="qNum">Frage</h3>
+            <p id="qText"></p>
+            <form id="choicesForm" class="choices">
+                <label><input type="radio" name="choice" value="a"> <span id="optA"></span></label>
+                <label><input type="radio" name="choice" value="b"> <span id="optB"></span></label>
+                <label><input type="radio" name="choice" value="c"> <span id="optC"></span></label>
+            </form>
+            <div style="margin-top:12px"><button id="nextBtn">Nächste Frage</button></div>
+        </div>
+        <div id="result" class="card hide"><h2>Ergebnis</h2><p id="scoreText"></p><p id="prizeText"></p></div>
+    </main>
+
+    <script>(function(){
+        // Single-person template for Anna (use full original wording)
+        const data = {
+            1: {
+                name: 'Elina Niloufar Schäge',
+                greeting: 'Hi Bestieeeee❤️‍🔥 💘 😘 Ich hoffe du freust dich mal eine Website von mir zugesicht zu bekkommen (Ja der Sven darf auch mal schauen hihi). Doch nun wird es ERNST. Das codewort mir zu übermitteln und die Seite zu öffnen hast du ja schon mal geschafft... muss man auch erstmal können stimmts? Jetzt aber kommt es zur Hauptaktraktion: DAS QUIZZZ (*leises wuseln und gejubel*) Du wirst, wenn du den Start-Button findest🤓🤓, zum Beantworten eines Quizes beautragt und JA: man kann etwas gewinnen (*die Stimmen werden lauter und es ertönt ^wer wird millionär^-Musik) Es gibt aber bestimmte Regeln Elinchen: Du darfst das Quiz nur einmal machen, nicht so wie früher die Gurkengruppen-freudschafts quizzes mit seite nochmal laden, denn das geht bei meiner Seite nicht hehe. Und die 2. Regel ist dass du dein Endergebnis als Screenshot mir zusenden musst damit ich weiß WELCHEN Preis der 3 du gewonnen hast. Ja du hörst richtig... 3 Preise!! Doch der eine is scheiße, der andere geht und der beste is der beste ig. Also streng dich an unnnnnd VIEL SPAßßßß!',
+                questions: [
+                    {text:'Wie heiße Ich?',a:'Anselm',b:'Anselm Nikolaus Kevenhoerster',c:'Amseln',correct:'a'},
+                    {text:'Wann ist mein Geburtstag?',a:'8. August',b:'4. August',c:'5. August',correct:'b'},
+                    {text:'Was ist mein Lieblingshobby?',a:'Youtube schauen (Ja das kann auch ein Hobby sein :(...) ',b:'Kochen',c:'Gaming',correct:'c'},
+                    {text:'In welchem Schulfach steh eich grade am besten?',a:'Physik',b:'Informatik',c:'Englisch',correct:'a'},
+                    {text:'Was ist mein Lieblingsessen?',a:'Kartoffelgratin',b:'Nudel Bolognese',c:'Pizza',correct:'b'},
+                    {text:'Welches Spiel habe ich noch NIE gespielt?',a:'The Last of us Part I',b:'GTAV',c:'GTA6',correct:'c'},
+                    {text:'Wie hoch bin ich bei HOCHSPRUNG gesprungen...?',a:'1,15 m',b:'1,11 m',c:'1,18 m',correct:'a'},
+                    {text:'Welches meiner Hobbys mag ich am wenigsten?',a:'Kochen',b:'Klavierunterricht',c:'Kontrabass Unterricht',correct:'b'},
+                    {text:'Wie oft war ich schon bei der Orchesterakademie in den Ferien?',a:'2 mal',b:'3 mal',c:'4 mal',correct:'a'},
+                    {text:'Wie lange denkst du hab ich für das erstellen der Seite gebraucht? ',a:'Easypeasy unter nh Stunde runtergerattert',b:'Geht eigentlich so ungefähr 2 Tage',c:'Sehr lange',correct:'b'}
+                ],
+                prizes: {
+                    low: 'Billigster Preis: Ein Gutschein für "Ich bringe dir nach Silvester noch eine Packung Plätzchen"',
+                    mid: 'Mittlerer Preis: Ein Gutschein für "Gebe dir etwas deiner Wahl aus"',
+                    jackpot: 'JACKPOT: Ein Gutschein für "EINMAL Hausaufgaben für dich erledigen lassen" (Gaar kein Bock das zu machen deswegen Jackbot ;))'
+                }
+            }
+        };
+
+        const THEMES=[
+            {bg:'linear-gradient(135deg,#C3B1E1 40%,#42b8e4 70%)',a:'#0ea5e9',b:'#7c3aed'},
+            {bg:'linear-gradient(135deg,#2b2d42 0%,#8d99ae 100%)',a:'#ff7ab6',b:'#ffb86b'},
+        ];
+
+        function applyThemeForFriend(id){const n=parseInt(id,10)||1;const t=THEMES[(n-1)%THEMES.length];document.documentElement.style.setProperty('--bg-gradient',t.bg);document.documentElement.style.setProperty('--accent',t.a);document.documentElement.style.setProperty('--accent-2',t.b);}
+        function showConfetti(){const colors=['#ff385c','#ffb86b','#7c3aed','#06b6d4'];const pieces=[];for(let i=0;i<40;i++){const el=document.createElement('div');el.className='confetti-piece';el.style.left=Math.random()*100+'%';el.style.top='-10%';el.style.background=colors[Math.floor(Math.random()*colors.length)];el.style.width=(6+Math.random()*8)+'px';el.style.height=(8+Math.random()*10)+'px';document.body.appendChild(el);pieces.push(el);const dx=(Math.random()-0.5)*120;const dy=80+Math.random()*160;const rot=(Math.random()-0.5)*720;el.animate([{transform:`translate3d(0,0,0) rotate(0deg)`,opacity:1},{transform:`translate3d(${dx}px,${dy}px,0) rotate(${rot}deg)`,opacity:0}],{duration:900+Math.random()*1400,easing:'cubic-bezier(.2,.8,.2,1)'});}setTimeout(()=>pieces.forEach(p=>p.remove()),2200)}
+
+        if (sessionStorage.getItem('page_reloaded')) {
+            const showWarn = () => { const warning = document.getElementById('reload-warning'); if (warning) { warning.classList.add('show'); document.body.style.pointerEvents = 'none'; } };
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', showWarn); else showWarn();
+            return;
+        }
+        window.addEventListener('beforeunload', () => { sessionStorage.setItem('page_reloaded', 'true'); });
+
+        const greetEl=document.getElementById('greeting'),quizEl=document.getElementById('quiz'),resultEl=document.getElementById('result'),friendNameEl=document.getElementById('friendName'),greetTextEl=document.getElementById('greetText'),startBtn=document.getElementById('startBtn'),qNumEl=document.getElementById('qNum'),qTextEl=document.getElementById('qText'),optA=document.getElementById('optA'),optB=document.getElementById('optB'),optC=document.getElementById('optC'),nextBtn=document.getElementById('nextBtn'),scoreText=document.getElementById('scoreText'),prizeText=document.getElementById('prizeText'),choicesForm=document.getElementById('choicesForm');
+        const headerEl = document.querySelector('header');
+        let current=null,idx=0,score=0,awaitingReview=false;
+        function show(e){e.classList.remove('hide')}function hide(e){e.classList.add('hide')}
+        function renderGreeting(){friendNameEl.textContent=current.name;greetTextEl.textContent=current.greeting;applyThemeForFriend('1');hide(quizEl);hide(resultEl);show(greetEl); if(headerEl) headerEl.style.display='none';}
+        function startQuiz(){idx=0;score=0;awaitingReview=false;hide(greetEl);hide(resultEl); if(headerEl) headerEl.style.display='none'; show(quizEl);renderQuestion()}
+        function renderQuestion(){
+            const q=current.questions[idx];
+            qNumEl.textContent=`Frage ${idx+1} von ${current.questions.length}`;
+            qTextEl.textContent=q.text;
+            optA.textContent=q.a;optB.textContent=q.b;optC.textContent=q.c;
+            Array.from(choicesForm.querySelectorAll('input[name="choice"]')).forEach(r=>{r.checked=false; r.disabled=false});
+            // reset label styles
+            Array.from(choicesForm.querySelectorAll('label')).forEach(l=>{l.style.background=''; l.style.border=''; l.style.opacity=''; l.style.color='';});
+            awaitingReview=false;
+            nextBtn.textContent='Antwort prüfen';
+        }
+        function triggerResultAnimation(kind){
+            resultEl.classList.remove('anim-sad','anim-cool','anim-mega','pop');
+            if(kind === 'low'){
+                resultEl.classList.add('anim-sad');
+                document.documentElement.style.setProperty('--bg-gradient','linear-gradient(135deg,#0b0b0b 0%,#4b4b4b 100%)');
+            } else if(kind === 'mid'){
+                resultEl.classList.add('anim-cool');
+                document.documentElement.style.setProperty('--bg-gradient','linear-gradient(135deg,#15202b 0%,#0b486b 100%)');
+            } else if(kind === 'jackpot'){
+                resultEl.classList.add('anim-mega','pop');
+                showConfetti();
+                document.documentElement.style.setProperty('--bg-gradient','linear-gradient(135deg,#ffb703 0%,#fb8b24 100%)');
+            }
+        }
+
+        function finish(){
+            hide(quizEl); show(resultEl);
+            scoreText.textContent = `Du hast ${score} von ${current.questions.length} Punkten.`;
+            let p = '';
+            let kind = 'low';
+            if(score === current.questions.length){ p = current.prizes.jackpot; kind='jackpot'; }
+            else if(score >= 5){ p = current.prizes.mid; kind='mid'; }
+            else { p = current.prizes.low; kind='low'; }
+            prizeText.textContent = p;
+            triggerResultAnimation(kind);
+            if(kind === 'jackpot') setTimeout(()=>resultEl.classList.remove('pop'),1600);
+        }
+        startBtn.addEventListener('click',()=>{startQuiz();});
+        nextBtn.addEventListener('click',()=>{
+            if(!awaitingReview){
+                const sel=Array.from(choicesForm.querySelectorAll('input[name="choice"]')).find(r=>r.checked);
+                if(!sel){alert('Bitte wähle eine Antwort.');return}
+                const correct = current.questions[idx].correct;
+                // highlight labels
+                Array.from(choicesForm.querySelectorAll('label')).forEach(label=>{
+                    const input = label.querySelector('input');
+                    if(!input) return;
+                    if(input.value === correct){
+                        label.style.background = 'rgba(47,158,68,0.18)';
+                        label.style.border = '1px solid var(--accent-2)';
+                    } else if(input.checked){
+                        label.style.background = 'rgba(255,77,77,0.14)';
+                        label.style.border = '1px solid rgba(255,80,80,0.18)';
+                    } else {
+                        label.style.opacity = '0.9';
+                    }
+                });
+                // disable inputs while showing result
+                Array.from(choicesForm.querySelectorAll('input[name="choice"]')).forEach(i=>i.disabled=true);
+                if(sel.value === correct) score++;
+                awaitingReview = true;
+                nextBtn.textContent = (idx===current.questions.length-1)?'Zur Auswertung':'Weiter';
+                return;
+            }
+            // second click -> advance
+            awaitingReview = false;
+            idx++;
+            if(idx>=current.questions.length) finish(); else renderQuestion();
+        });
+        // auto-load
+        current=data[1];renderGreeting();
+    })();</script>
+</body>
+</html>
+
+<!-- Roboto font + GUTSCHEIN animation -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+#gutschein{position:fixed;left:0;top:0;visibility:hidden;transform:translateY(8px);font-family:'Roboto',system-ui,Arial,sans-serif;font-weight:700;color:#ff3333;font-size:3.6vmin;line-height:1;text-align:center;padding:6px 8px;z-index:100000;pointer-events:none;background:transparent;border-radius:6px}
+.gutschein-show{visibility:visible;animation:gutscheinIn 420ms cubic-bezier(.2,.9,.2,1) forwards}
+@keyframes gutscheinIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+<div id="gutschein" aria-hidden="true">GUTSCHEIN</div>
+<script>
+(function(){
+    var el = document.getElementById('gutschein'); if(!el) return;
+    function placeAndShow(){
+        var res = document.getElementById('result');
+        if(!res) return;
+        var rect = res.getBoundingClientRect();
+        var width = Math.min(rect.width, window.innerWidth - 24);
+        var left = Math.max(12, rect.left + (rect.width - width) / 2);
+        var top = rect.bottom + 8;
+        el.style.width = width + 'px';
+        el.style.left = left + 'px';
+        el.style.top = top + 'px';
+        el.textContent = 'GUTSCHEIN';
+        el.classList.add('gutschein-show');
+    }
+    var res = document.getElementById('result');
+    if(!res){ if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', placeAndShow); else placeAndShow(); return; }
+    var obs = new MutationObserver(function(){ if(!res.classList.contains('hide')){ placeAndShow(); obs.disconnect(); }});
+    obs.observe(res, {attributes:true, attributeFilter:['class']});
+    if(!res.classList.contains('hide')) placeAndShow();
+    window.addEventListener('resize', function(){ if(el.classList.contains('gutschein-show')) placeAndShow(); });
+})();
+</script>
